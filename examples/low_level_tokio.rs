@@ -21,24 +21,33 @@ struct Args {
     #[clap(short, parse(from_os_str))]
     cache: Option<PathBuf>,
 
-    /// Use Let's Encrypt production environment
-    /// (see https://letsencrypt.org/docs/staging-environment/)
-    #[clap(long)]
-    prod: bool,
-
+    // /// Use Let's Encrypt production environment
+    // /// (see https://letsencrypt.org/docs/staging-environment/)
+    // #[clap(long)]
+    // prod: bool,
     #[clap(short, long, default_value = "443")]
     port: u16,
 }
+
+/// For pebble
+const DIRECTORY_LOCALHOST: &str = "https://localhost:14000/dir";
 
 #[tokio::main]
 async fn main() {
     simple_logger::init_with_level(log::Level::Info).unwrap();
     let args = Args::parse();
 
+    let client_config = futures_rustls::rustls::ClientConfig::builder()
+        .dangerous() // The `Verifier` we're using is actually safe
+        .with_custom_certificate_verifier(std::sync::Arc::new(rustls_platform_verifier::Verifier::new()))
+        .with_no_client_auth();
+
     let mut state = AcmeConfig::new(args.domains)
         .contact(args.email.iter().map(|e| format!("mailto:{}", e)))
         .cache_option(args.cache.clone().map(DirCache::new))
-        .directory_lets_encrypt(args.prod)
+        .directory(DIRECTORY_LOCALHOST)
+        .client_tls_config(std::sync::Arc::new(client_config))
+        // .directory_lets_encrypt(args.prod)
         .state();
     let challenge_rustls_config = state.challenge_rustls_config();
     let default_rustls_config = state.default_rustls_config();

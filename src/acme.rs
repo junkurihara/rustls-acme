@@ -159,6 +159,9 @@ pub enum ChallengeType {
     Dns01,
     #[serde(rename = "tls-alpn-01")]
     TlsAlpn01,
+    /// For Pebble
+    #[serde(rename = "dns-account-01")]
+    DnsAccount01,
 }
 
 #[derive(Debug, Deserialize)]
