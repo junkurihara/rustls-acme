@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use crate::any_ecdsa_type;
 use crate::crypto::error::{KeyRejected, Unspecified};
 use crate::crypto::rand::SystemRandom;
 use crate::crypto::signature::{EcdsaKeyPair, EcdsaSigningAlgorithm, ECDSA_P256_SHA256_FIXED_SIGNING};
 use crate::https_helper::{https, HttpsRequestError};
-use crate::jose::{key_authorization_sha256, sign, JoseError};
+use crate::jose::{key_authorization, key_authorization_sha256, sign, JoseError};
 use base64::prelude::*;
 use futures_rustls::pki_types::{PrivateKeyDer, PrivatePkcs8KeyDer};
 use futures_rustls::rustls::{sign::CertifiedKey, ClientConfig};
@@ -14,6 +12,7 @@ use http::{Method, Response};
 use rcgen::{CustomExtension, KeyPair, PKCS_ECDSA_P256_SHA256};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::Arc;
 use thiserror::Error;
 
 pub const LETS_ENCRYPT_STAGING_DIRECTORY: &str = "https://acme-staging-v02.api.letsencrypt.org/directory";
@@ -129,6 +128,15 @@ impl Account {
         let sk = any_ecdsa_type(&PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key_pair.serialize_der()))).unwrap();
         let certified_key = CertifiedKey::new(vec![cert.der().clone()], sk);
         Ok((challenge, certified_key))
+    }
+    pub fn http_01<'a>(&self, challenges: &'a [Challenge]) -> Result<(&'a Challenge, String), AcmeError> {
+        let challenge = challenges.iter().find(|c| c.typ == ChallengeType::Http01);
+        let challenge = match challenge {
+            Some(challenge) => challenge,
+            None => return Err(AcmeError::NoHttp01Challenge),
+        };
+        let key_auth = key_authorization(&self.key_pair, &challenge.token)?;
+        Ok((challenge, key_auth))
     }
 }
 
@@ -246,8 +254,10 @@ pub enum AcmeError {
     Crypto(#[from] Unspecified),
     #[error("acme service response is missing {0} header")]
     MissingHeader(&'static str),
-    #[error("no tls-alpn-01 challenge found")]
+    #[error("no TLS-ALPN-01 challenge found")]
     NoTlsAlpn01Challenge,
+    #[error("no HTTP-01 challenge found")]
+    NoHttp01Challenge,
 }
 
 impl From<http::Error> for AcmeError {
