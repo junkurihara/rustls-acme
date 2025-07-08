@@ -55,6 +55,10 @@ impl<EC: Debug, EA: Debug> TestCache<EC, EA> {
     pub fn ca_pem(&self) -> &str {
         &self.ca_pem
     }
+    pub fn ca_key_owned(&self) -> Result<KeyPair, rcgen::Error> {
+        // This is a workaround for the fact that rcgen::KeyPair does not implement Clone.
+        rcgen::KeyPair::from_pem(&self.ca_key.serialize_pem().as_str())
+    }
 }
 
 #[async_trait]
@@ -68,9 +72,10 @@ impl<EC: Debug, EA: Debug> CertCache for TestCache<EC, EA> {
         params.not_before = date_time_ymd(2000, 1, 1);
         params.not_after = date_time_ymd(3000, 1, 1);
         let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).unwrap();
-        // let issuer = rcgen::Issuer::from_ca_cert_der(self.ca_cert.der(), self.ca_key.).unwrap();
-        // let cert = params.signed_by(&key_pair, &issuer).unwrap();
-        let cert = params.signed_by(&key_pair, &self.ca_cert, &self.ca_key).unwrap();
+
+        let issuer = rcgen::Issuer::from_ca_cert_der(self.ca_cert.der(), self.ca_key_owned().unwrap()).unwrap();
+        let cert = params.signed_by(&key_pair, &issuer).unwrap();
+        // let cert = params.signed_by(&key_pair, &self.ca_cert, &self.ca_key).unwrap();
 
         let private_key_pem = key_pair.serialize_pem();
         let signed_cert_pem = cert.pem();
