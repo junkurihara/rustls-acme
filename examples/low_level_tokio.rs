@@ -37,9 +37,11 @@ async fn main() {
     simple_logger::init_with_level(log::Level::Info).unwrap();
     let args = Args::parse();
 
+    let provider = std::sync::Arc::new(rustls::crypto::aws_lc_rs::default_provider());
+    let verifier = rustls_platform_verifier::Verifier::new(provider).unwrap();
     let client_config = futures_rustls::rustls::ClientConfig::builder()
         .dangerous() // The `Verifier` we're using is actually safe
-        .with_custom_certificate_verifier(std::sync::Arc::new(rustls_platform_verifier::Verifier::new()))
+        .with_custom_certificate_verifier(std::sync::Arc::new(verifier))
         .with_no_client_auth();
 
     let mut state = AcmeConfig::new(args.domains)
