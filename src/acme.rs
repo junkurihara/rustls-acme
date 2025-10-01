@@ -170,6 +170,8 @@ pub enum ChallengeType {
     /// For Pebble
     #[serde(rename = "dns-account-01")]
     DnsAccount01,
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Deserialize)]
