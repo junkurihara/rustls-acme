@@ -17,7 +17,7 @@
 //! rustls-acme = "*"
 //! ```
 //!
-//! ## Validation mechanims
+//! ## Validation mechanisms
 //!
 //! Using TLS-ALPN-01 is used by default and recommended.
 //! However, if the DNS entry points to an HTTP proxy, which terminates TLS, but you still need a certificate,
@@ -54,7 +54,7 @@
 //! }
 //!
 //! const HELLO: &'static [u8] = br#"HTTP/1.1 200 OK
-//! Content-Length: 11
+//! Content-Length: 10
 //! Content-Type: text/plain; charset=utf-8
 //!
 //! Hello Tls!"#;
@@ -113,7 +113,7 @@
 //! - [Josh Triplett](https://github.com/joshtriplett) for many contributions and feedback.
 //! - [Jack Klamer](https://github.com/jklamer) for contributing HTTP-01 challenge support.
 
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod acceptor;
 pub mod acme;
@@ -134,6 +134,7 @@ pub mod tokio;
 pub mod tower;
 
 pub use futures_rustls;
+pub use futures_rustls::rustls;
 
 pub use acceptor::*;
 pub use cache::*;
