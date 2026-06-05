@@ -39,7 +39,10 @@ tokio-util = { version = "0.7", features = ["compat"], optional = true }
 axum-server = { version = "0.8", features = [
   "tls-rustls-no-provider",
 ], optional = true }
-async-web-client = { version = "0.6", default-features = false }
+# Temporary fork: upstream async-web-client 0.6.2 panics ("static str is not valid path") on every
+# request when built against http >= 1.4.1, because it constructs `PathAndQuery::from_static("")`.
+# Pinned to the fix branch until the upstream PR is released. See junkurihara/async-web-client.
+async-web-client = { git = "https://github.com/junkurihara/async-web-client", branch = "fix/empty-path-and-query-panic", default-features = false }
 http = "1.4"
 blocking = "1.6"
 tower-service = { version = "0.3", optional = true }
