@@ -1,6 +1,6 @@
 [package]
 name = "rustls-acme"
-version = "0.15.2"
+version = "0.15.3"
 authors = ["Florian Uekermann <florian@uekermann.me>"]
 edition = "2018"
 description = "TLS certificate management and serving using rustls"
@@ -34,15 +34,12 @@ x509-parser = "0.18.0"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 async-trait = "0.1"
 async-io = "2.6"
-tokio = { version = "1.47", optional = true }
+tokio = { version = "1", optional = true }
 tokio-util = { version = "0.7", features = ["compat"], optional = true }
 axum-server = { version = "0.8", features = [
   "tls-rustls-no-provider",
 ], optional = true }
-# Temporary fork: upstream async-web-client 0.6.2 panics ("static str is not valid path") on every
-# request when built against http >= 1.4.1, because it constructs `PathAndQuery::from_static("")`.
-# Pinned to the fix branch until the upstream PR is released. See junkurihara/async-web-client.
-async-web-client = { git = "https://github.com/junkurihara/async-web-client", branch = "fix/empty-path-and-query-panic", default-features = false }
+async-web-client = { version = "0.6.3", default-features = false }
 http = "1.4"
 blocking = "1.6"
 tower-service = { version = "0.3", optional = true }
